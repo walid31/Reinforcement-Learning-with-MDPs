@@ -1,15 +1,19 @@
+import numpy as np
+import matplotlib.pyplot as plt 
+'exec(%matplotlib inline)'
+
 class gridworld:
 
     def __init__(self):
         self.dim = [5, 5]
-        self.pos_A = [0, 1]
-        self.rew_A = 10
-        self.trans_A = [4, 1]
-        self.pos_B = [0, 3]
-        self.rew_B = 5
+        self.pos_A = [4, 4]
+        self.rew_A = 2
+        self.trans_A = [3, 1]
+        self.pos_B = [2, 1]
+        self.rew_B = 1
         self.trans_B = [2, 3]
         # Define starting position
-        self.start = [4, 0]
+        self.start = [0, 0]
         self.s = self.start[:]
         self.reward = 0
 
@@ -34,7 +38,7 @@ class gridworld:
                 elif i == self.trans_B[0] and j == self.pos_A[1]:
                     row.append("| B'")
                 elif i == self.start[0] and j == self.start[1]:
-                    row.append("| S  ")
+                    row.append("| S ")
                 else:
                     row.append("|   ")
             row.append("|   ")
@@ -100,3 +104,81 @@ class gridworld:
         self.s = self.start
         self.reward = 0
         self.n = 0
+
+
+grid = gridworld()
+grid.show_grid()
+
+v = np.zeros(grid.dim)
+gamma = 0.9
+delta = 1e-5
+delta_t = 1
+
+while delta_t > delta:
+    v_new = np.zeros(grid.dim)
+    for i in range(grid.dim[0]):
+        for j in range(grid.dim[1]):
+            for action in grid.action_space:
+                grid.s = [i, j]
+                s, r = grid.action(action)
+                prob = grid.action_prob[grid.action_space.index(action)]
+                v_new[i, j] += prob * (r + gamma * v[s[0], s[1]])
+    delta_t = np.sum(np.abs(v - v_new))
+    v = v_new.copy()
+
+print(v.round(1)) 
+
+q = np.zeros((grid.dim[0], grid.dim[1], len(grid.action_space)))
+delta_t = 1
+
+while delta_t > delta:
+    q_old = q.copy()
+    for i in range(grid.dim[0]):
+        for j in range(grid.dim[1]):
+            for a in grid.action_space:
+                grid.s = [i, j]
+                s, r = grid.action(a)
+                a_index = grid.action_space.index(a)
+                q[i, j, a_index] = r + gamma * max(q_old[s[0], s[1]])
+    delta_t = np.sum(np.abs(q - q_old))
+
+print(np.max(q, axis=2).round(1))
+
+def opt_policy(q, grid):
+    q_max = np.max(q, axis=2)
+    x = np.linspace(0, grid.dim[0] - 1, grid.dim[0]) + 0.5
+    y = np.linspace(grid.dim[1] - 1, 0, grid.dim[1]) + 0.5
+    X, Y = np.meshgrid(x, y)
+    zeros = np.zeros((grid.dim))
+    
+    fig = plt.figure(figsize=(12,8))
+    ax = plt.axes()
+    
+    for i, action in enumerate(grid.action_space):
+        q_star = np.zeros((5, 5))
+        for j in range(grid.dim[0]):
+            for k in reversed(range(grid.dim[1])):
+                if q[j, k, i] == q_max[j, k]:
+                    q_star[j, k] = 0.4
+        # Plot results
+        if action == "U":
+            # Vectors point in positive Y-direction
+            plt.quiver(X, Y, zeros, q_star, scale=1, units='xy')
+        elif action == "L":
+            # Vectors point in negative X-direction
+            plt.quiver(X, Y, -q_star, zeros, scale=1, units='xy')
+        elif action == "D":
+            # Vectors point in negative Y-direction
+            plt.quiver(X, Y, zeros, -q_star, scale=1, units='xy')
+        elif action == "R":
+            # Vectors point in positive X-direction
+            plt.quiver(X, Y, q_star, zeros, scale=1, units='xy')
+        
+    plt.xlim([0, grid.dim[0]])
+    plt.ylim([0, grid.dim[1]])
+    ax.set_yticklabels([])
+    ax.set_xticklabels([])
+    plt.grid()
+    plt.show()
+
+opt_policy(q, grid)
