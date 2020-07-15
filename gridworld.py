@@ -1,0 +1,102 @@
+class gridworld:
+
+    def __init__(self):
+        self.dim = [5, 5]
+        self.pos_A = [0, 1]
+        self.rew_A = 10
+        self.trans_A = [4, 1]
+        self.pos_B = [0, 3]
+        self.rew_B = 5
+        self.trans_B = [2, 3]
+        # Define starting position
+        self.start = [4, 0]
+        self.s = self.start[:]
+        self.reward = 0
+
+        # Step count
+        self.n = 0
+        self.action_space = ["U", "L", "D", "R"]
+        self.action_prob = [0.25, 0.25, 0.25, 0.25]
+
+    # Show empty environment
+    def show_grid(self):
+        # print rows
+        for i in range(self.dim[0]):
+            print("-" * (self.dim[0] * 5 + 1))
+            row = []
+            for j in range(self.dim[1]):
+                if i == self.pos_A[0] and j == self.pos_A[1]:
+                    row.append("| A ")
+                elif i == self.pos_B[0] and j == self.pos_B[1]:
+                    row.append("| B ")
+                elif i == self.trans_A[0] and j == self.trans_A[1]:
+                    row.append("| A'")
+                elif i == self.trans_B[0] and j == self.pos_A[1]:
+                    row.append("| B'")
+                elif i == self.start[0] and j == self.start[1]:
+                    row.append("| S  ")
+                else:
+                    row.append("|   ")
+            row.append("|   ")
+            print(' '.join(row))
+        print("-" * (self.dim[0] * 5 + 1))
+
+    # Show state 
+    def show_state(self):
+        # print rows
+        for i in range(self.dim[0]):
+            print("-" * (self.dim[0] * 5 + 1))
+            row = []
+            for j in range(self.dim[1]):
+                if i == self.s[0] and j == self.s[1]:
+                    row.append("| X ")
+                elif i == self.pos_A[0] and j == self.pos_A[1]:
+                    row.append("| A ")
+                elif i == self.pos_B[0] and j == self.pos_B[1]:
+                    row.append("| B ")
+                elif i == self.trans_A[0] and j == self.trans_A[1]:
+                    row.append("| A'")
+                elif i == self.trans_B[0] and j == self.pos_A[1]:
+                    row.append("| B'")
+                else:
+                    row.append("|   ")
+            row.append("|   ")
+            print(' '.join(row))
+        print("-" * (self.dim[0] * 5 + 1))
+    
+    # give the agent an action
+    def action(self, a):
+        if a not in self.action_space:
+            return "Error: Invalid action submission"
+        # Check for special transition states
+        if self.s == self.pos_A:
+            self.s = self.trans_A[:]
+            self.reward = self.rew_A
+        elif self.s ==self.pos_B:
+            self.s = self.trans_B[:]
+            self.reward = self.rew_B
+        # Move up
+        elif a == "U" and self.s[0] > 0:
+            self.s[0] -= 1
+            self.reward = 0
+        # Move left
+        elif a == "L" and self.s[1] > 0:
+            self.s[1] -= 1
+            self.reward = 0
+        # Move down
+        elif a == "D" and self.s[0] < self.dim[0] - 1:
+            self.s[0] += 1
+            self.reward = 0
+        # Move right
+        elif a == "R" and self.s[1] < self.dim[1] - 1:
+            self.s[1] += 1
+            self.reward = 0
+        else:
+            self.reward = -1
+        self.n += 1
+        return self.s, self.reward
+    
+    def reset(self):
+        self.s = self.start
+        self.reward = 0
+        self.n = 0
